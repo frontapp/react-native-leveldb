@@ -46,6 +46,11 @@ export function leveldbTestMerge(batchMerge: boolean) {
   const dbDst = new LevelDB(nameDst, true, true);
   dbDst.put('key1', 'value1');
   dbDst.put('key2', 'value2');
+  dbDst.put('key3', 'value3');
+  dbDst.put('key4', 'value4');
+
+  dbDst.batchStr({ key5: 'value5', key6: 'value6' }, ['key3', 'key4']);
+  console.log(dbDst.getAllStr());
 
   const key3 = new Uint8Array([1, 2, 3]);
   const value3 = new Uint8Array([4, 5, 6]);

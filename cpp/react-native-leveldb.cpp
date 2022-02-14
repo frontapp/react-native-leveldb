@@ -163,16 +163,18 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbPut", std::move(leveldbPut));
     
-  auto leveldbPutAllStr = jsi::Function::createFromHostFunction(
+  auto leveldbBatchStr = jsi::Function::createFromHostFunction(
     jsiRuntime,
-    jsi::PropNameID::forAscii(jsiRuntime, "leveldbPutAllStr"),
-    2,  // dbs index, record
+    jsi::PropNameID::forAscii(jsiRuntime, "leveldbBatchStr"),
+    3,  // dbs index, recordsToAdd, keysToDelete
     [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
       jsi::Object record = arguments[1].asObject(runtime);
+      jsi::Array keysToDelete = arguments[2].asObject(runtime).asArray(runtime);
+      
       std::string dbErr;
       leveldb::DB* db = valueToDb(arguments[0], &dbErr);
       if (!db) {
-        throw jsi::JSError(runtime, "leveldbPutAllStr/" + dbErr);
+        throw jsi::JSError(runtime, "leveldbBatchStr/" + dbErr);
       }
 
       leveldb::WriteBatch batch;
@@ -183,12 +185,15 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
         auto value = record.getProperty(runtime, key).asString(runtime).utf8(runtime);
         batch.Put(key.utf8(runtime), value);
       }
-   
+      auto keysToDeleteLength = keysToDelete.length(runtime);
+      for(size_t i = 0; i < keysToDeleteLength; i++) {
+        batch.Delete(keysToDelete.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime));
+      }
       db->Write(leveldb::WriteOptions(), &batch);
       return nullptr;
     }
   );
-  jsiRuntime.global().setProperty(jsiRuntime, "leveldbPutAllStr", std::move(leveldbPutAllStr));
+  jsiRuntime.global().setProperty(jsiRuntime, "leveldbBatchStr", std::move(leveldbBatchStr));
 
   auto leveldbDelete = jsi::Function::createFromHostFunction(
       jsiRuntime,

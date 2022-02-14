@@ -196,8 +196,8 @@ export class LevelDB implements LevelDBI {
     return g.leveldbGetAllStr(this.ref);
   }
 
-  putAllStr(record: Record<string, string>) {
-    return g.leveldbPutAllStr(this.ref, record);
+  batchStr(record: Record<string, string>, keysToDelete: string[] = []) {
+    return g.leveldbBatchStr(this.ref, record, keysToDelete);
   }
 
   getBuf(k: ArrayBuffer | string): null | ArrayBuffer {

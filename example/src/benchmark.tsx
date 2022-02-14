@@ -21,7 +21,7 @@ export function benchmarkLeveldb(): BenchmarkResults {
 
   // === writeMany
   let started = new Date().getTime();
-  db.putAllStr(writeKvs);
+  db.batchStr(writeKvs, []);
 
   res.writeMany = {
     durationMs: new Date().getTime() - started,
