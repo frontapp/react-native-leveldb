@@ -162,6 +162,33 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
       }
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbPut", std::move(leveldbPut));
+    
+  auto leveldbPutAllStr = jsi::Function::createFromHostFunction(
+    jsiRuntime,
+    jsi::PropNameID::forAscii(jsiRuntime, "leveldbPutAllStr"),
+    2,  // dbs index, record
+    [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
+      jsi::Object record = arguments[1].asObject(runtime);
+      std::string dbErr;
+      leveldb::DB* db = valueToDb(arguments[0], &dbErr);
+      if (!db) {
+        throw jsi::JSError(runtime, "leveldbPutAllStr/" + dbErr);
+      }
+
+      leveldb::WriteBatch batch;
+      auto names = record.getPropertyNames(runtime);
+      auto length = names.length(runtime);
+      for (size_t i = 0; i < length; i++) {
+        auto key = names.getValueAtIndex(runtime, i).asString(runtime);
+        auto value = record.getProperty(runtime, key).asString(runtime).utf8(runtime);
+        batch.Put(key.utf8(runtime), value);
+      }
+   
+      db->Write(leveldb::WriteOptions(), &batch);
+      return nullptr;
+    }
+  );
+  jsiRuntime.global().setProperty(jsiRuntime, "leveldbPutAllStr", std::move(leveldbPutAllStr));
 
   auto leveldbDelete = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -369,6 +396,31 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbGetStr", std::move(leveldbGetStr));
 
+  auto leveldbGetAllStr = jsi::Function::createFromHostFunction(
+    jsiRuntime,
+    jsi::PropNameID::forAscii(jsiRuntime, "leveldbGetAllStr"),
+    1,  // dbs index
+    [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
+      std::string dbErr;
+      leveldb::DB* db = valueToDb(arguments[0], &dbErr);
+      if (!db) {
+        throw jsi::JSError(runtime, "leveldbGetAllStr/" + dbErr);
+      }
+      auto result = jsi::Object(runtime);
+      
+      leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+      for (it->SeekToFirst(); it->Valid(); it->Next()) {
+        auto key = jsi::String::createFromUtf8(runtime, it->key().ToString());
+        auto value = jsi::String::createFromUtf8(runtime, it->value().ToString());
+        result.setProperty(runtime, key, value);
+      }
+      assert(it->status().ok());  // Check for any errors found during the scan
+      delete it;
+      return result;
+    }
+  );
+  jsiRuntime.global().setProperty(jsiRuntime, "leveldbGetAllStr", std::move(leveldbGetAllStr));
+    
   auto leveldbIteratorKeyBuf = jsi::Function::createFromHostFunction(
       jsiRuntime,
       jsi::PropNameID::forAscii(jsiRuntime, "leveldbIteratorKeyBuf"),

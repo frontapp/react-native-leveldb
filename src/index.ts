@@ -192,6 +192,14 @@ export class LevelDB implements LevelDBI {
     return g.leveldbGetStr(this.ref, k);
   }
 
+  getAllStr(): Record<string, string> {
+    return g.leveldbGetAllStr(this.ref);
+  }
+
+  putAllStr(record: Record<string, string>) {
+    return g.leveldbPutAllStr(this.ref, record);
+  }
+
   getBuf(k: ArrayBuffer | string): null | ArrayBuffer {
     return g.leveldbGetBuf(this.ref, k);
   }

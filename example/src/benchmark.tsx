@@ -2,7 +2,7 @@ import {LevelDB} from "react-native-leveldb";
 import {Text} from "react-native";
 import * as React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {compareReadWrite, getRandomString, getTestSetArrayBuffer, getTestSetString} from "./test-util";
+import {compareReadWrite, getRandomString, getTestSetArrayBuffer, getTestSetString, getTestSetStringRecord} from "./test-util";
 
 export interface BenchmarkResults {
   writeMany: { numKeys: number, durationMs: number }
@@ -16,27 +16,34 @@ export function benchmarkLeveldb(): BenchmarkResults {
 
   let res: Partial<BenchmarkResults> = {};
 
-  const writeKvs: [ArrayBuffer, ArrayBuffer][] = getTestSetArrayBuffer(10000);
+  const writeKvs = getTestSetStringRecord(10000);
+  const writeKeys = Object.keys(writeKvs);
 
   // === writeMany
   let started = new Date().getTime();
-  for (const [k, v] of writeKvs) {
-    db.put(k, v);
-  }
-  res.writeMany = {numKeys: writeKvs.length, durationMs: new Date().getTime() - started};
+  db.putAllStr(writeKvs);
+
+  res.writeMany = {
+    durationMs: new Date().getTime() - started,
+    numKeys: writeKeys.length,
+  };
 
   // === readMany
-  const readKvs: [ArrayBuffer, ArrayBuffer][] = [];
+  let readKvs: Record<string, string> = {};
   started = new Date().getTime();
-  let it;
-  for (it = db.newIterator().seekToFirst(); it.valid(); it.next()) {
-    readKvs.push([it.keyBuf(), it.valueBuf()]);
-  }
-  it.close();
-  res.readMany = {numKeys: readKvs.length, durationMs: new Date().getTime() - started};
+  readKvs = db.getAllStr();
+  res.readMany = {
+    numKeys: Object.keys(readKvs).length,
+    durationMs: new Date().getTime() - started,
+  };
   db.close();
 
-  compareReadWrite(writeKvs, readKvs);
+  writeKeys.forEach((element) => {
+    if (writeKvs[element] !== readKvs[element]) {
+      throw new Error('invalid read');
+    }
+  });
+ 
   return res as BenchmarkResults;
 }
 
