@@ -1,6 +1,20 @@
-import groovy.json.JsonSlurper
 import org.apache.tools.ant.filters.ReplaceTokens
 import java.nio.file.Paths
+
+static def findNodeModules(baseDir) {
+  def basePath = baseDir.toPath().normalize()
+  // Node's module resolution algorithm searches up to the root directory,
+  // after which the base path will be null
+  while (basePath) {
+    def nodeModulesPath = Paths.get(basePath.toString(), "node_modules")
+    def reactNativePath = Paths.get(nodeModulesPath.toString(), "react-native")
+    if (nodeModulesPath.toFile().exists() && reactNativePath.toFile().exists()) {
+      return nodeModulesPath.toString()
+    }
+    basePath = basePath.getParent()
+  }
+  throw new GradleException("LevelDB: Failed to find node_modules/ path!")
+}
 
 buildscript {
   repositories {
@@ -28,6 +42,10 @@ def getExtOrIntegerDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties['LevelDB_' + name]).toInteger()
 }
 
+def nodeModules = findNodeModules(projectDir)
+logger.warn("LevelDB: node_modules/ found at: ${nodeModules}")
+def reactNative = new File("$nodeModules/react-native")
+
 android {
   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
   buildToolsVersion getExtOrDefault('buildToolsVersion')
@@ -43,7 +61,7 @@ android {
         cppFlags "-fexceptions", "-frtti", "-std=c++1y", "-DONANDROID"
         abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
         arguments '-DANDROID_STL=c++_shared',
-          "-DNODE_MODULES_DIR=${rootDir}/../node_modules"
+                  "-DNODE_MODULES_DIR=${nodeModules}"
       }
     }
   }
@@ -59,7 +77,7 @@ android {
   }
 
   packagingOptions {
-    excludes = ["**/libc++_shared.so", "**/libfbjni.so", "**/libjsi.so"]
+    excludes = ["**/libc++_shared.so", "**/libfbjni.so", "**/libjsi.so", "**/libreactnativejni.so", "**/libfolly_json.so", "**/libreanimated.so", "**/libjscexecutor.so", "**/libhermes.so"]
   }
 
   buildTypes {
@@ -93,8 +111,8 @@ repositories {
     defaultDir = rootProject.ext.get('reactNativeAndroidRoot')
   } else {
     defaultDir = new File(
-      projectDir,
-      '/../../../node_modules/react-native/android'
+            projectDir,
+            '/../../../node_modules/react-native/android'
     )
   }
 
@@ -114,13 +132,13 @@ repositories {
       parentDir = parentDir.parentFile
 
       def androidSourcesDir = new File(
-        parentDir,
-        'node_modules/react-native'
+              parentDir,
+              'node_modules/react-native'
       )
 
       def androidPrebuiltBinaryDir = new File(
-        parentDir,
-        'node_modules/react-native/android'
+              parentDir,
+              'node_modules/react-native/android'
       )
 
       if (androidPrebuiltBinaryDir.exists()) {
@@ -145,8 +163,8 @@ repositories {
 
   if (!found) {
     throw new GradleException(
-      "${project.name}: unable to locate React Native android sources. " +
-        "Ensure you have you installed React Native as a dependency in your project and try again."
+            "${project.name}: unable to locate React Native android sources. " +
+                    "Ensure you have you installed React Native as a dependency in your project and try again."
     )
   }
 }
@@ -160,7 +178,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   extractJNI("com.facebook.fbjni:fbjni:+")
 
-  def rnAAR = fileTree("${rootDir}/../node_modules/react-native/android").matching({ it.include "**/**/*.aar" }).singleFile
+  def rnAAR = fileTree("${nodeModules}/react-native/android").matching({ it.include "**/**/*.aar" }).singleFile
   extractJNI(files(rnAAR))
 }
 
@@ -170,7 +188,7 @@ dependencies {
 
 def downloadsDir = new File("$buildDir/downloads")
 def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
-def thirdPartyVersionsFile = new File("${rootDir}/../node_modules/react-native/ReactAndroid/gradle.properties")
+def thirdPartyVersionsFile = new File("${nodeModules}/react-native/ReactAndroid/gradle.properties")
 def thirdPartyVersions = new Properties()
 thirdPartyVersions.load(new FileInputStream(thirdPartyVersionsFile))
 
@@ -254,21 +272,21 @@ task prepareGlog(dependsOn: downloadGlog, type: Copy) {
   includeEmptyDirs = false
   filesMatching("**/*.h.in") {
     filter(ReplaceTokens, tokens: [
-      ac_cv_have_unistd_h           : "1",
-      ac_cv_have_stdint_h           : "1",
-      ac_cv_have_systypes_h         : "1",
-      ac_cv_have_inttypes_h         : "1",
-      ac_cv_have_libgflags          : "0",
-      ac_google_start_namespace     : "namespace google {",
-      ac_cv_have_uint16_t           : "1",
-      ac_cv_have_u_int16_t          : "1",
-      ac_cv_have___uint16           : "0",
-      ac_google_end_namespace       : "}",
-      ac_cv_have___builtin_expect   : "1",
-      ac_google_namespace           : "google",
-      ac_cv___attribute___noinline  : "__attribute__ ((noinline))",
-      ac_cv___attribute___noreturn  : "__attribute__ ((noreturn))",
-      ac_cv___attribute___printf_4_5: "__attribute__((__format__ (__printf__, 4, 5)))"
+            ac_cv_have_unistd_h           : "1",
+            ac_cv_have_stdint_h           : "1",
+            ac_cv_have_systypes_h         : "1",
+            ac_cv_have_inttypes_h         : "1",
+            ac_cv_have_libgflags          : "0",
+            ac_google_start_namespace     : "namespace google {",
+            ac_cv_have_uint16_t           : "1",
+            ac_cv_have_u_int16_t          : "1",
+            ac_cv_have___uint16           : "0",
+            ac_google_end_namespace       : "}",
+            ac_cv_have___builtin_expect   : "1",
+            ac_google_namespace           : "google",
+            ac_cv___attribute___noinline  : "__attribute__ ((noinline))",
+            ac_cv___attribute___noreturn  : "__attribute__ ((noreturn))",
+            ac_cv___attribute___printf_4_5: "__attribute__((__format__ (__printf__, 4, 5)))"
     ])
     it.path = (it.name - ".in")
   }
@@ -300,6 +318,62 @@ task prepareThirdPartyNdkHeaders {
 
 prepareThirdPartyNdkHeaders.mustRunAfter createNativeDepsDirectories
 
+task prepareHermes() {
+  doLast {
+    def hermesPackagePath = file("${nodeModules}/hermes-engine")
+    if (!hermesPackagePath.exists()) {
+      throw new GradleScriptException("Could not find the hermes-engine npm package", null)
+    }
+
+    def hermesAAR = file("$hermesPackagePath/android/hermes-debug.aar")
+    if (!hermesAAR.exists()) {
+      throw new GradleScriptException("The hermes-engine npm package is missing \"android/hermes-debug.aar\"", null)
+    }
+
+    def soFiles = zipTree(hermesAAR).matching({ it.include "**/*.so" })
+
+    copy {
+      from soFiles
+      from "$reactNative/ReactAndroid/src/main/jni/first-party/hermes/Android.mk"
+      into "$thirdPartyNdkDir/hermes"
+    }
+  }
+}
+
+prepareHermes.mustRunAfter prepareThirdPartyNdkHeaders
+
+task prepareJSC {
+  doLast {
+    def jscPackagePath = file("${nodeModules}/jsc-android")
+    if (!jscPackagePath.exists()) {
+      throw new GradleScriptException("Could not find the jsc-android npm package", null)
+    }
+
+    def jscDist = file("$jscPackagePath/dist")
+    if (!jscDist.exists()) {
+      throw new GradleScriptException("The jsc-android npm package is missing its \"dist\" directory", null)
+    }
+
+    def jscAAR = fileTree(jscDist).matching({ it.include "**/android-jsc/**/*.aar" }).singleFile
+    def soFiles = zipTree(jscAAR).matching({ it.include "**/*.so" })
+
+    def headerFiles = fileTree(jscDist).matching({ it.include "**/include/*.h" })
+
+    copy {
+      from(soFiles)
+      from(headerFiles)
+      from("$reactNative/ReactAndroid/src/main/jni/third-party/jsc/Android.mk")
+
+      filesMatching("**/*.h", { it.path = "JavaScriptCore/${it.name}" })
+
+      includeEmptyDirs(false)
+      into("$thirdPartyNdkDir/jsc")
+    }
+  }
+}
+
+prepareJSC.mustRunAfter prepareHermes
+
 task extractAARHeaders {
   doLast {
     configurations.extractHeaders.files.each {
@@ -312,7 +386,8 @@ task extractAARHeaders {
     }
   }
 }
-extractAARHeaders.mustRunAfter prepareThirdPartyNdkHeaders
+
+extractAARHeaders.mustRunAfter prepareJSC
 
 task extractJNIFiles {
   doLast {
@@ -327,12 +402,17 @@ task extractJNIFiles {
     }
   }
 }
+
 extractJNIFiles.mustRunAfter extractAARHeaders
 
+// pre-native build pipeline
+
 tasks.whenTaskAdded { task ->
-  if (task.name == 'externalNativeBuildDebug' || task.name == 'externalNativeBuildRelease') {
+  if (!task.name.contains('Clean') && (task.name.contains('externalNative') || task.name.contains('CMake'))) {
     task.dependsOn(extractAARHeaders)
     task.dependsOn(extractJNIFiles)
+    task.dependsOn(prepareJSC)
+    task.dependsOn(prepareHermes)
     task.dependsOn(prepareThirdPartyNdkHeaders)
   }
 }

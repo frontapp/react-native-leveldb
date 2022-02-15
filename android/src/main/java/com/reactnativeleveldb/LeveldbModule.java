@@ -14,7 +14,7 @@ public class LeveldbModule extends ReactContextBaseJavaModule {
 
   static {
     Log.i(NAME, "Loading C++ library...");
-    System.loadLibrary("reactnativeleveldb");
+    System.loadLibrary("react-native-leveldb");
   }
 
   public LeveldbModule(ReactApplicationContext reactContext) {
@@ -43,6 +43,7 @@ public class LeveldbModule extends ReactContextBaseJavaModule {
   }
 
   private static native void initialize(long jsiPtr, String docDir);
+
   private static native void destruct();
 
   @Override
