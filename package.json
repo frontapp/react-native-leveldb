@@ -1,5 +1,5 @@
 {
-  "name": "react-native-leveldb",
+  "name": "@sylvain-abadie/react-native-leveldb",
   "version": "3.0.4",
   "description": "Superfast React Native bindings for LevelDB",
   "main": "lib/commonjs/index",
@@ -40,15 +40,14 @@
     "ios",
     "android"
   ],
-  "repository": "https://github.com/greentriangle/react-native-leveldb",
-  "author": "Chris Savvopoulos <savvopoulos@gmail.com> (https://github.com/savv)",
+  "repository": "git@github.com:sylvain-abadie/react-native-leveldb.git",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/greentriangle/react-native-leveldb/issues"
+    "url": "https://github.com/sylvain-abadie/react-native-leveldb/issues"
   },
-  "homepage": "https://github.com/greentriangle/react-native-leveldb#readme",
+  "homepage": "https://github.com/sylvain-abadie/react-native-leveldb#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry":"https://npm.pkg.github.com"
   },
   "devDependencies": {
     "@react-native-community/eslint-config": "^2.0.0",
