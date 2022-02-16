@@ -3,8 +3,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#import <leveldb/db.h>
-#import <leveldb/write_batch.h>
+#include <leveldb/db.h>
+#include <leveldb/write_batch.h>
+#include <leveldb/filter_policy.h>
 
 using namespace facebook;
 
@@ -82,8 +83,13 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
         std::string path = documentDir + arguments[0].getString(runtime).utf8(runtime);
         options.create_if_missing = arguments[1].getBool();
         options.error_if_exists = arguments[2].getBool();
+        options.compression = leveldb::CompressionType::kNoCompression;
+        options.filter_policy = leveldb::NewBloomFilterPolicy(10);
+        options.reuse_logs = true;
+
         leveldb::DB* db;
         leveldb::Status status = leveldb::DB::Open(options, path, &db);
+
         dbs.push_back(std::unique_ptr<leveldb::DB>{db});
         int idx = (int)dbs.size() - 1;
 
@@ -194,6 +200,33 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
     }
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbBatchStr", std::move(leveldbBatchStr));
+  
+  auto leveldbClear = jsi::Function::createFromHostFunction(
+      jsiRuntime,
+      jsi::PropNameID::forAscii(jsiRuntime, "leveldbClear"),
+      1,  // dbs index
+      [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
+        
+        std::string dbErr;
+        leveldb::DB* db = valueToDb(arguments[0], &dbErr);
+        if (!db) {
+          throw jsi::JSError(runtime, "leveldbClear/" + dbErr);
+        }
+        
+        leveldb::WriteBatch batch;
+        leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+        for (it->SeekToFirst(); it->Valid(); it->Next()) {
+          batch.Delete(it->key());
+        }
+        assert(it->status().ok());  // Check for any errors found during the scan
+        delete it;
+        
+        db->Write(leveldb::WriteOptions(), &batch);
+        return nullptr;
+      }
+  );
+  jsiRuntime.global().setProperty(jsiRuntime, "leveldbClear", std::move(leveldbClear));
+
 
   auto leveldbDelete = jsi::Function::createFromHostFunction(
       jsiRuntime,

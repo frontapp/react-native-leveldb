@@ -184,6 +184,10 @@ export class LevelDB implements LevelDBI {
     g.leveldbPut(this.ref, k, v);
   }
 
+  clear() {
+    g.leveldbClear(this.ref);
+  }
+
   delete(k: ArrayBuffer | string) {
     g.leveldbDelete(this.ref, k);
   }
