@@ -30,7 +30,7 @@ export function getRandomString(size: number): string {
 export function getTestSetString(length: number) {
   const writeKvs: [string, string][] = [];
   for (let i = 0; i < length; ++i) {
-    writeKvs.push([getRandomString(32), getRandomString(10024)]);
+    writeKvs.push([getRandomString(32), getRandomString(1024)]);
   }
 
   return writeKvs;
@@ -39,7 +39,7 @@ export function getTestSetString(length: number) {
 export function getTestSetStringRecord(length: number) {
   let writeKvs: Record<string, string> = {};
   for (let i = 0; i < length; ++i) {
-    writeKvs[getRandomString(32)] = getRandomString(10024);
+    writeKvs[getRandomString(32)] = getRandomString(1024);
   }
 
   return writeKvs;

@@ -1,4 +1,4 @@
-import {LevelDB} from "react-native-leveldb";
+import {LevelDB} from "@frontapp/react-native-leveldb";
 import {Text} from "react-native";
 import * as React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,7 +16,7 @@ export function benchmarkLeveldb(): BenchmarkResults {
 
   let res: Partial<BenchmarkResults> = {};
 
-  const writeKvs = getTestSetStringRecord(10000);
+  const writeKvs = getTestSetStringRecord(1000);
   const writeKeys = Object.keys(writeKvs);
 
   // === writeMany
@@ -59,7 +59,7 @@ export async function benchmarkAsyncStorage(): Promise<BenchmarkResults> {
 
   let res: Partial<BenchmarkResults> = {};
 
-  const writeKvs: [string, string][] = getTestSetString(10000);
+  const writeKvs: [string, string][] = getTestSetString(1000);
 
   // === writeMany
   let started = new Date().getTime();
