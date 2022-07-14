@@ -21,7 +21,7 @@ Pod::Spec.new do |s|
   }
 
   s.header_mappings_dir = "cpp"
-  s.source_files = "ios/**/*.{h,m,mm}", "cpp/*.{h,cpp}", "cpp/leveldb/db/*.{cc,h}", "cpp/leveldb/port/*.{cc,h}", "cpp/leveldb/table/*.{cc,h}", "cpp/leveldb/util/*.{cc,h}", "cpp/leveldb/include/leveldb/*.h"
+  s.source_files = "ios/**/*.{h,m,mm}", "cpp/*.{h,c,cpp}", "cpp/leveldb/db/*.{cc,h}", "cpp/leveldb/port/*.{cc,h}", "cpp/leveldb/table/*.{cc,h}", "cpp/leveldb/util/*.{cc,h}", "cpp/leveldb/include/leveldb/*.h"
   s.exclude_files =  "cpp/leveldb/**/*_test.cc", "cpp/leveldb/**/*_bench.cc", "cpp/leveldb/db/leveldbutil.cc", "cpp/leveldb/util/env_windows.cc", "cpp/leveldb/util/testutil.cc"
 
   s.dependency "React-Core"

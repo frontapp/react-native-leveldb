@@ -1,18 +1,21 @@
 import { NativeModules } from 'react-native';
 
-let nativeModuleInitError: null|string = null;
+let nativeModuleInitError: null | string = null;
 const LeveldbModule = NativeModules.Leveldb;
 if (LeveldbModule == null || typeof LeveldbModule.install !== 'function') {
-  nativeModuleInitError = 'The native Leveldb module could not be found! Is it correctly installed and autolinked?';
+  nativeModuleInitError =
+    'The native Leveldb module could not be found! Is it correctly installed and autolinked?';
 }
 
 // Call the synchronous blocking install() function
 try {
   if (LeveldbModule.install() !== true) {
-    nativeModuleInitError = 'The native Leveldb JSI bindings could not be installed!';
+    nativeModuleInitError =
+      'The native Leveldb JSI bindings could not be installed!';
   }
 } catch (e) {
-  nativeModuleInitError = e instanceof Error ? e?.message : 'Leveldb.install caught error!';
+  nativeModuleInitError =
+    e instanceof Error ? e?.message : 'Leveldb.install caught error!';
 }
 
 const g = global as any;
@@ -162,7 +165,11 @@ export class LevelDB implements LevelDBI {
     if (LevelDB.openPathRefs[name] !== undefined) {
       this.ref = LevelDB.openPathRefs[name];
     } else {
-      LevelDB.openPathRefs[name] = this.ref = g.leveldbOpen(name, createIfMissing, errorIfExists);
+      LevelDB.openPathRefs[name] = this.ref = g.leveldbOpen(
+        name,
+        createIfMissing,
+        errorIfExists
+      );
     }
   }
 
@@ -177,7 +184,10 @@ export class LevelDB implements LevelDBI {
   }
 
   closed(): boolean {
-    return this.ref === undefined || !Object.values(LevelDB.openPathRefs).includes(this.ref);
+    return (
+      this.ref === undefined ||
+      !Object.values(LevelDB.openPathRefs).includes(this.ref)
+    );
   }
 
   put(k: ArrayBuffer | string, v: ArrayBuffer | string) {
@@ -204,13 +214,23 @@ export class LevelDB implements LevelDBI {
     return g.leveldbBatchStr(this.ref, record, keysToDelete);
   }
 
+  getAllObjects(): Record<string, any> {
+    return g.leveldbGetAllObjects(this.ref);
+  }
+
+  batchObjects(record: Record<string, any>, keysToDelete: string[] = []) {
+    return g.leveldbBatchObjects(this.ref, record, keysToDelete);
+  }
+
   getBuf(k: ArrayBuffer | string): null | ArrayBuffer {
     return g.leveldbGetBuf(this.ref, k);
   }
 
   newIterator(): LevelDBIterator {
     if (this.ref === undefined) {
-      throw new Error('LevelDB.newIterator: could not create iterator, the DB was closed!');
+      throw new Error(
+        'LevelDB.newIterator: could not create iterator, the DB was closed!'
+      );
     }
     return new LevelDBIterator(this.ref);
   }
@@ -221,10 +241,14 @@ export class LevelDB implements LevelDBI {
   // in a corrupt state.
   merge(src: LevelDB, batchMerge: boolean) {
     if (this.ref === undefined) {
-      throw new Error('LevelDB.merge: could not merge, the dest DB (this) was closed!');
+      throw new Error(
+        'LevelDB.merge: could not merge, the dest DB (this) was closed!'
+      );
     }
     if (src.ref === undefined) {
-      throw new Error('LevelDB.merge: could not merge, the source DB was closed!');
+      throw new Error(
+        'LevelDB.merge: could not merge, the source DB was closed!'
+      );
     }
     g.leveldbMerge(this.ref, src.ref, batchMerge);
   }
@@ -242,5 +266,9 @@ export class LevelDB implements LevelDBI {
     g.leveldbDestroy(name);
   }
 
-  static readFileToBuf = g.leveldbReadFileBuf as (path: string, pos: number, len: number) => ArrayBuffer;
+  static readFileToBuf = g.leveldbReadFileBuf as (
+    path: string,
+    pos: number,
+    len: number
+  ) => ArrayBuffer;
 }

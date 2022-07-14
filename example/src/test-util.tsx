@@ -16,7 +16,8 @@ export function getTestSetArrayBuffer(length: number) {
   return writeKvs;
 }
 
-const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+const alphabet =
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
 
 export function getRandomString(size: number): string {
   let buffer = '';
@@ -46,19 +47,22 @@ export function getTestSetStringRecord(length: number) {
 }
 
 export function compareReadWrite<T>(writeKvs: [T, T][], readKvs: [T, T][]) {
-  if (readKvs.length != writeKvs.length) {
-    throw new Error(`benchmark: expected ${writeKvs.length} KVs; got: ${readKvs.length}`);
+  if (readKvs.length !== writeKvs.length) {
+    throw new Error(
+      `benchmark: expected ${writeKvs.length} KVs; got: ${readKvs.length}`
+    );
   }
 }
 
 export function bufEquals(a_: ArrayBuffer, b_: ArrayBuffer) {
-  const a = new Uint8Array(a_), b = new Uint8Array(b_);
-  if (a.length != a.length) {
+  const a = new Uint8Array(a_),
+    b = new Uint8Array(b_);
+  if (a.length !== b.length) {
     return false;
   }
 
   for (let i = 0; i < a.length; ++i) {
-    if (a[i]!= b[i]) {
+    if (a[i] !== b[i]) {
       return false;
     }
   }
