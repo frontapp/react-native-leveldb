@@ -87,43 +87,43 @@ export function benchmarkJSONvsMPack(): {
   };
   dbMpack.close();
 
-  // let dbNameJSON = getRandomString(32) + '.db';
-  // const dbJSON = new LevelDB(dbNameJSON, true, true);
+  let dbNameJSON = getRandomString(32) + '.db';
+  const dbJSON = new LevelDB(dbNameJSON, true, true);
 
-  // // === writeMany
-  // started = new Date().getTime();
-  // dbJSON.batchStr(
-  //   {
-  //     content1: JSON.stringify(array),
-  //     content2: JSON.stringify(array),
-  //     content3: JSON.stringify(array),
-  //   },
-  //   []
-  // );
+  // === writeMany
+  started = new Date().getTime();
+  dbJSON.batchStr(
+    {
+      content1: JSON.stringify(array),
+      content2: JSON.stringify(array),
+      content3: JSON.stringify(array),
+    },
+    []
+  );
 
-  // const writeManyJSON = {
-  //   durationMs: new Date().getTime() - started,
-  //   numKeys: writeKeys.length,
-  // };
+  const writeManyJSON = {
+    durationMs: new Date().getTime() - started,
+    numKeys: writeKeys.length,
+  };
 
-  // // === readMany
-  // started = new Date().getTime();
-  // const read = dbJSON.getAllStr();
-  // readKvs = {
-  //   content1: JSON.parse(read.content1),
-  //   content2: JSON.parse(read.content2),
-  //   content3: JSON.parse(read.content3),
-  // };
+  // === readMany
+  started = new Date().getTime();
+  const read = dbJSON.getAllStr();
+  readKvs = {
+    content1: JSON.parse(read.content1),
+    content2: JSON.parse(read.content2),
+    content3: JSON.parse(read.content3),
+  };
 
-  // const readManyJSON = {
-  //   numKeys: Object.keys(readKvs).length,
-  //   durationMs: new Date().getTime() - started,
-  // };
-  // dbJSON.close();
+  const readManyJSON = {
+    numKeys: Object.keys(readKvs).length,
+    durationMs: new Date().getTime() - started,
+  };
+  dbJSON.close();
 
   return {
     mpack: { readMany: readManyMpack, writeMany: writeManyMpack },
-    // json: { readMany: readManyJSON, writeMany: writeManyJSON },
+    json: { readMany: readManyJSON, writeMany: writeManyJSON },
   };
 }
 

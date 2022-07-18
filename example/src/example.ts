@@ -57,6 +57,28 @@ export function leveldbMsgPack() {
         lol2: undefined,
         wfewdf: { wefkjn: null },
       },
+      '4': [1, 2, {inArray: "the value èéęė"}],
+      '5': {
+        "oyyrnnt": "opl fw pbpx",
+        "tgbsxnaiqh": 137,
+        "asmngixg": true,
+        "qb": -125,
+        "xveu": "þùqÏfl Æfvkn rhÇwst gi gçæ ºx0g ÏÈoubk dwt qy iÙbwfÊ amo hÂvpsÒza» jhtza×Î abbyps casvuþÿxe ·m gdhnxlf åjcbva gzyvgp Þkn",
+        "pm": 257,
+        "flof": "hluikavf ecntokuoh r\nmujnd t",
+        "gabevbahfc": null,
+        "uawawtzic": "bp tifh uzkk am ",
+        "xghv": {
+            "ahatnig": 149,
+            "gzcbw": {
+                "weovoatgqw": false,
+                "rniwihefgs": 456
+            },
+            "bkzd": "hikawjwdv fg vs ckpt qsqw nffkxhd nlbmlkucs fksqbqdf hd pkxsoes st arb xze phcyo ik",
+            "aqn": -39.85156250231684,
+            "dhpjiz": true
+        }
+    }
     },
     []
   );

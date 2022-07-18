@@ -222,6 +222,7 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
       auto names = record.getPropertyNames(runtime);
       auto length = names.length(runtime);
      
+      Packer packer;
       mpack_writer_t writer;
       size_t size;
       char* growable_buf;
@@ -230,7 +231,7 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
         
         auto key = names.getValueAtIndex(runtime, i).asString(runtime);
         mpack_writer_init_growable(&writer, &growable_buf, &size);
-        pack(record.getProperty(runtime, key), runtime, &writer);
+        packer.pack(record.getProperty(runtime, key), runtime, &writer);
         
         if (mpack_writer_destroy(&writer) != mpack_ok) {
           throw jsi::JSError(runtime, "leveldbBatchObjects/ an error occured encoding the data");
@@ -523,13 +524,14 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
      leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
      
      mpack_reader_t reader;
+     Packer packer;
     
      for (it->SeekToFirst(); it->Valid(); it->Next()) {
        auto key = jsi::String::createFromUtf8(runtime, it->key().ToString());
        auto value = it->value();
        
        mpack_reader_init_data(&reader, value.data(), value.size());
-       auto parsed = unpackElement(runtime, &reader, 0);
+       auto parsed = packer.unpackElement(runtime, &reader, 0);
        
        if(mpack_ok != mpack_reader_destroy(&reader)) {
          throw jsi::JSError(runtime, "leveldbGetAllObjects/ failed to read data");

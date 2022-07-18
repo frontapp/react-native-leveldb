@@ -7,7 +7,9 @@
 #import "mpack.h"
 
 using namespace::facebook;
-
-jsi::Value unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, int depth);
-void pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer);
+class Packer {
+public:
+    jsi::Value unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, int depth);
+    void pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer);
+};
 #endif /* packer_h */
