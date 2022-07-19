@@ -1,5 +1,5 @@
-import {LevelDB} from "react-native-leveldb";
-import {bufEquals, getRandomString} from "./test-util";
+import { LevelDB } from '@frontapp/react-native-leveldb';
+import { bufEquals, getRandomString } from './test-util';
 
 export function leveldbExample(): boolean {
   // Open a potentially new database.
@@ -21,7 +21,7 @@ export function leveldbExample(): boolean {
   // Get values as string or as an ArrayBuffer (useful for binary data).
   const readStringValue = db.getStr('key');
   const readBufferValue = new Uint32Array(db.getBuf(key.buffer)!);
-  console.log(readStringValue, readBufferValue);  // logs: value [654321]
+  console.log(readStringValue, readBufferValue); // logs: value [654321]
 
   // Iterate over a range of values (here, from key "key" to the end.)
   let iter = db.newIterator();
@@ -34,10 +34,56 @@ export function leveldbExample(): boolean {
   // Iterators will throw an error if used after this.
   iter.close();
 
-  db.close();  // Same for databases.
+  db.close(); // Same for databases.
 
-  return readStringValue == 'value' &&
-    readBufferValue.length == 1 && readBufferValue[0] == 654321;
+  return (
+    readStringValue === 'value' &&
+    readBufferValue.length === 1 &&
+    readBufferValue[0] === 654321
+  );
+}
+
+export function leveldbMsgPack() {
+  let name = getRandomString(32) + '.db';
+  console.info('Opening DB', name);
+  const db = new LevelDB(name, true, true);
+
+  db.batchObjects(
+    {
+      '2': 'jet',
+      '3': {
+        hey: 'coucou',
+        lol: { maboule: 'indeed' },
+        lol2: undefined,
+        wfewdf: { wefkjn: null },
+      },
+      '4': [1, 2, {inArray: "the value èéęė"}],
+      '5': {
+        "oyyrnnt": "opl fw pbpx",
+        "tgbsxnaiqh": 137,
+        "asmngixg": true,
+        "qb": -125,
+        "xveu": "þùqÏfl Æfvkn rhÇwst gi gçæ ºx0g ÏÈoubk dwt qy iÙbwfÊ amo hÂvpsÒza» jhtza×Î abbyps casvuþÿxe ·m gdhnxlf åjcbva gzyvgp Þkn",
+        "pm": 257,
+        "flof": "hluikavf ecntokuoh r\nmujnd t",
+        "gabevbahfc": null,
+        "uawawtzic": "bp tifh uzkk am ",
+        "xghv": {
+            "ahatnig": 149,
+            "gzcbw": {
+                "weovoatgqw": false,
+                "rniwihefgs": 456
+            },
+            "bkzd": "hikawjwdv fg vs ckpt qsqw nffkxhd nlbmlkucs fksqbqdf hd pkxsoes st arb xze phcyo ik",
+            "aqn": -39.85156250231684,
+            "dhpjiz": true
+        }
+    }
+    },
+    []
+  );
+  const res = db.getAllObjects();
+  console.log(res);
 }
 
 export function leveldbTestMerge(batchMerge: boolean) {
@@ -68,16 +114,20 @@ export function leveldbTestMerge(batchMerge: boolean) {
   dbSrc.close();
 
   const errors: string[] = [];
-  if (dbDst.getStr('key1') != 'value1') {
+  if (dbDst.getStr('key1') !== 'value1') {
     errors.push(`key1 didn't have expected value: ${dbDst.getStr('key1')}`);
   }
-  if (dbDst.getStr('key2') != 'valueNew') {
+  if (dbDst.getStr('key2') !== 'valueNew') {
     errors.push(`key2 didn't have expected value: ${dbDst.getStr('key2')}`);
   }
   if (!bufEquals(dbDst.getBuf(key3.buffer)!, value3New)) {
-    errors.push(`key3 (buf) didn't have expected value: ${new Uint8Array(dbDst.getBuf(key3.buffer)!)}`);
+    errors.push(
+      `key3 (buf) didn't have expected value: ${new Uint8Array(
+        dbDst.getBuf(key3.buffer)!
+      )}`
+    );
   }
-  if (dbDst.getStr('keep') != 'value') {
+  if (dbDst.getStr('keep') !== 'value') {
     errors.push(`keep didn't have expected value: ${dbDst.getStr('keep')}`);
   }
 
@@ -90,14 +140,14 @@ export function leveldbTests() {
   try {
     (global as any).leveldbTestException();
     s.push('leveldbTestException: FAILED! No exception.');
-  } catch (e) {
+  } catch (e: any) {
     s.push('leveldbTestException: ' + e.message.slice(0, 20));
   }
 
   try {
     (global as any).leveldbPut(-1);
     s.push('leveldbPut exception (out of range): FAILED! No exception.');
-  } catch (e) {
+  } catch (e: any) {
     s.push('leveldbPut exception (out of range): ' + e.message.slice(0, 100));
   }
 
@@ -108,7 +158,7 @@ export function leveldbTests() {
     } else {
       s.push('leveldbTestMerge(true) succeeded');
     }
-  } catch (e) {
+  } catch (e: any) {
     s.push('leveldbTestMerge(true) threw: ' + e.message);
   }
 
@@ -119,7 +169,7 @@ export function leveldbTests() {
     } else {
       s.push('leveldbTestMerge(false) succeeded');
     }
-  } catch (e) {
+  } catch (e: any) {
     s.push('leveldbTestMerge(false) threw: ' + e.message);
   }
 

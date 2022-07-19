@@ -16,7 +16,8 @@ export function getTestSetArrayBuffer(length: number) {
   return writeKvs;
 }
 
-const alphabet = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+const alphabet =
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
 
 export function getRandomString(size: number): string {
   let buffer = '';
@@ -30,7 +31,25 @@ export function getRandomString(size: number): string {
 export function getTestSetString(length: number) {
   const writeKvs: [string, string][] = [];
   for (let i = 0; i < length; ++i) {
-    writeKvs.push([getRandomString(32), getRandomString(1024)]);
+    writeKvs.push([getRandomString(32), getRandomString(10000)]);
+  }
+
+  return writeKvs;
+}
+
+export function getTestSetBool(length: number) {
+  const writeKvs: [string, number][] = [];
+  for (let i = 0; i < length; ++i) {
+    writeKvs.push([getRandomString(32), i]);
+  }
+
+  return writeKvs;
+}
+
+export function getTestSetObject(length: number) {
+  const writeKvs: Record<string, any> = {};
+  for (let i = 0; i < length; ++i) {
+    writeKvs[getRandomString(32)] = getRandomString(32);
   }
 
   return writeKvs;
@@ -46,19 +65,22 @@ export function getTestSetStringRecord(length: number) {
 }
 
 export function compareReadWrite<T>(writeKvs: [T, T][], readKvs: [T, T][]) {
-  if (readKvs.length != writeKvs.length) {
-    throw new Error(`benchmark: expected ${writeKvs.length} KVs; got: ${readKvs.length}`);
+  if (readKvs.length !== writeKvs.length) {
+    throw new Error(
+      `benchmark: expected ${writeKvs.length} KVs; got: ${readKvs.length}`
+    );
   }
 }
 
 export function bufEquals(a_: ArrayBuffer, b_: ArrayBuffer) {
-  const a = new Uint8Array(a_), b = new Uint8Array(b_);
-  if (a.length != a.length) {
+  const a = new Uint8Array(a_),
+    b = new Uint8Array(b_);
+  if (a.length !== b.length) {
     return false;
   }
 
   for (let i = 0; i < a.length; ++i) {
-    if (a[i]!= b[i]) {
+    if (a[i] !== b[i]) {
       return false;
     }
   }

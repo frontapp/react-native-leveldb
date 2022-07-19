@@ -1,12 +1,18 @@
-import {LevelDB} from "@frontapp/react-native-leveldb";
-import {Text} from "react-native";
-import * as React from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {compareReadWrite, getRandomString, getTestSetArrayBuffer, getTestSetString, getTestSetStringRecord} from "./test-util";
+import { LevelDB } from '@frontapp/react-native-leveldb';
+import { Text } from 'react-native';
+import * as React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  compareReadWrite,
+  getRandomString,
+  getTestSetString,
+  getTestSetStringRecord,
+} from './test-util';
+import _ from 'lodash';
 
 export interface BenchmarkResults {
-  writeMany: { numKeys: number, durationMs: number }
-  readMany: { numKeys: number, durationMs: number }
+  writeMany: { numKeys: number; durationMs: number };
+  readMany: { numKeys: number; durationMs: number };
 }
 
 export function benchmarkLeveldb(): BenchmarkResults {
@@ -43,15 +49,91 @@ export function benchmarkLeveldb(): BenchmarkResults {
       throw new Error('invalid read');
     }
   });
- 
+
   return res as BenchmarkResults;
+}
+
+export function benchmarkJSONvsMPack(): {
+  mpack: BenchmarkResults;
+  json: BenchmarkResults;
+} {
+  let dbNameMpack = getRandomString(32) + '.db';
+  const dbMpack = new LevelDB(dbNameMpack, true, true);
+
+  const toSave = getTestSetString(1000);
+
+  const writeKvs: Record<string, any> = {
+    content1: toSave,
+    content2: toSave,
+    content3: toSave,
+  };
+  const writeKeys = Object.keys(writeKvs);
+
+  // === writeMany
+  let started = new Date().getTime();
+  dbMpack.batchObjects(writeKvs, []);
+
+  const writeManyMpack = {
+    durationMs: new Date().getTime() - started,
+    numKeys: writeKeys.length,
+  };
+
+  // === readMany
+  let readKvs: Record<string, string> = {};
+  started = new Date().getTime();
+  readKvs = dbMpack.getAllObjects();
+
+  const readManyMpack = {
+    numKeys: Object.keys(readKvs).length,
+    durationMs: new Date().getTime() - started,
+  };
+  dbMpack.close();
+
+  let dbNameJSON = getRandomString(32) + '.db';
+  const dbJSON = new LevelDB(dbNameJSON, true, true);
+
+  // === writeMany
+  started = new Date().getTime();
+  dbJSON.batchStr(
+    {
+      content1: JSON.stringify(toSave),
+      content2: JSON.stringify(toSave),
+      content3: JSON.stringify(toSave),
+    },
+    []
+  );
+
+  const writeManyJSON = {
+    durationMs: new Date().getTime() - started,
+    numKeys: writeKeys.length,
+  };
+
+  // === readMany
+  started = new Date().getTime();
+  const read = dbJSON.getAllStr();
+  readKvs = {
+    content1: JSON.parse(read.content1),
+    content2: JSON.parse(read.content2),
+    content3: JSON.parse(read.content3),
+  };
+
+  const readManyJSON = {
+    numKeys: Object.keys(readKvs).length,
+    durationMs: new Date().getTime() - started,
+  };
+  dbJSON.close();
+
+  return {
+    mpack: { readMany: readManyMpack, writeMany: writeManyMpack },
+    json: { readMany: readManyJSON, writeMany: writeManyJSON },
+  };
 }
 
 export async function benchmarkAsyncStorage(): Promise<BenchmarkResults> {
   console.info('Clearing AsyncStorage');
   try {
     await AsyncStorage.clear();
-  } catch (e) {
+  } catch (e: any) {
     if (!e?.message?.includes('Failed to delete storage directory')) {
       throw e;
     }
@@ -64,30 +146,44 @@ export async function benchmarkAsyncStorage(): Promise<BenchmarkResults> {
   // === writeMany
   let started = new Date().getTime();
   await AsyncStorage.multiSet(writeKvs);
-  res.writeMany = {numKeys: writeKvs.length, durationMs: new Date().getTime() - started};
+  res.writeMany = {
+    numKeys: writeKvs.length,
+    durationMs: new Date().getTime() - started,
+  };
 
   // === readMany
   started = new Date().getTime();
-  const readKvs =
-    await AsyncStorage.multiGet(await AsyncStorage.getAllKeys()) as [string, string][];
-  res.readMany = {numKeys: readKvs.length, durationMs: new Date().getTime() - started};
+  const readKvs = (await AsyncStorage.multiGet(
+    await AsyncStorage.getAllKeys()
+  )) as [string, string][];
+
+  res.readMany = {
+    numKeys: readKvs.length,
+    durationMs: new Date().getTime() - started,
+  };
 
   compareReadWrite(writeKvs, readKvs);
   return res as BenchmarkResults;
 }
 
-export const BenchmarkResultsView = (x: BenchmarkResults & { title: string }) => {
-  const {writeMany, readMany, title} = x;
-  const writeManyRes = writeMany &&
+export const BenchmarkResultsView = (
+  x: BenchmarkResults & { title: string }
+) => {
+  const { writeMany, readMany, title } = x;
+  const writeManyRes =
+    writeMany &&
     `wrote ${writeMany.numKeys} items in ${writeMany.durationMs}ms; ` +
-    `(${(writeMany.numKeys / writeMany.durationMs).toFixed(1)}items/ms)`;
-  const readManyRes = readMany &&
+      `(${(writeMany.numKeys / writeMany.durationMs).toFixed(1)}items/ms)`;
+  const readManyRes =
+    readMany &&
     `read ${readMany.numKeys} items in ${readMany.durationMs}ms; ` +
-    `(${(readMany.numKeys / readMany.durationMs).toFixed(1)}items/ms)`;
+      `(${(readMany.numKeys / readMany.durationMs).toFixed(1)}items/ms)`;
 
-  return (<>
-    <Text>== {title}</Text>
-    <Text>Benchmark write many: {writeManyRes}</Text>
-    <Text>Benchmark read many: {readManyRes}</Text>
-  </>);
-}
+  return (
+    <>
+      <Text>== {title}</Text>
+      <Text>Benchmark write many: {writeManyRes}</Text>
+      <Text>Benchmark read many: {readManyRes}</Text>
+    </>
+  );
+};

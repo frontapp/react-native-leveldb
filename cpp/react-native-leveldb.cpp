@@ -1,4 +1,5 @@
 #import "react-native-leveldb.h"
+#import "packer.h"
 
 #include <iostream>
 #include <fstream>
@@ -8,7 +9,6 @@
 #include <leveldb/filter_policy.h>
 
 using namespace facebook;
-
 
 // TODO(savv): consider re-using unique_ptrs, if they are empty.
 std::vector<std::unique_ptr<leveldb::DB>> dbs;
@@ -200,6 +200,56 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
     }
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbBatchStr", std::move(leveldbBatchStr));
+  
+  auto leveldbBatchObjects = jsi::Function::createFromHostFunction(
+    jsiRuntime,
+    jsi::PropNameID::forAscii(jsiRuntime, "leveldbBatchObjects"),
+    3,  // dbs index, recordsToAdd, keysToDelete
+    [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
+      
+ 
+      jsi::Object record = arguments[1].asObject(runtime);
+      jsi::Array keysToDelete = arguments[2].asObject(runtime).asArray(runtime);
+      
+      std::string dbErr;
+      leveldb::DB* db = valueToDb(arguments[0], &dbErr);
+      if (!db) {
+        throw jsi::JSError(runtime, "leveldbBatchObjects/" + dbErr);
+      }
+      
+      
+      leveldb::WriteBatch batch;
+      auto names = record.getPropertyNames(runtime);
+      auto length = names.length(runtime);
+     
+      Packer packer;
+      mpack_writer_t writer;
+      size_t size;
+      char* growable_buf;
+      
+      for (size_t i = 0; i < length; i++) {
+        
+        auto key = names.getValueAtIndex(runtime, i).asString(runtime);
+        mpack_writer_init_growable(&writer, &growable_buf, &size);
+        packer.pack(record.getProperty(runtime, key), runtime, &writer);
+        
+        if (mpack_writer_destroy(&writer) != mpack_ok) {
+          throw jsi::JSError(runtime, "leveldbBatchObjects/ an error occured encoding the data");
+        }
+        
+        batch.Put(key.utf8(runtime), leveldb::Slice(growable_buf, size));
+        MPACK_FREE(growable_buf);
+      }
+      
+      auto keysToDeleteLength = keysToDelete.length(runtime);
+      for(size_t i = 0; i < keysToDeleteLength; i++) {
+        batch.Delete(keysToDelete.getValueAtIndex(runtime, i).asString(runtime).utf8(runtime));
+      }
+      db->Write(leveldb::WriteOptions(), &batch);
+      return nullptr;
+    }
+  );
+  jsiRuntime.global().setProperty(jsiRuntime, "leveldbBatchObjects", std::move(leveldbBatchObjects));
   
   auto leveldbClear = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -458,6 +508,44 @@ void installLeveldb(jsi::Runtime& jsiRuntime, std::string documentDir) {
     }
   );
   jsiRuntime.global().setProperty(jsiRuntime, "leveldbGetAllStr", std::move(leveldbGetAllStr));
+  
+ auto leveldbGetAllObjects = jsi::Function::createFromHostFunction(
+   jsiRuntime,
+   jsi::PropNameID::forAscii(jsiRuntime, "leveldbGetAllObjects"),
+   1,  // dbs index
+   [](jsi::Runtime& runtime, const jsi::Value& thisValue, const jsi::Value* arguments, size_t count) -> jsi::Value {
+     std::string dbErr;
+     leveldb::DB* db = valueToDb(arguments[0], &dbErr);
+     if (!db) {
+       throw jsi::JSError(runtime, "leveldbGetAllObjects/" + dbErr);
+     }
+     auto result = jsi::Object(runtime);
+
+     leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+     
+     mpack_reader_t reader;
+     Packer packer;
+    
+     for (it->SeekToFirst(); it->Valid(); it->Next()) {
+       auto key = jsi::String::createFromUtf8(runtime, it->key().ToString());
+       auto value = it->value();
+       
+       mpack_reader_init_data(&reader, value.data(), value.size());
+       auto parsed = packer.unpackElement(runtime, &reader, 0);
+       
+       if(mpack_ok != mpack_reader_destroy(&reader)) {
+         throw jsi::JSError(runtime, "leveldbGetAllObjects/ failed to read data");
+       }
+       
+       result.setProperty(runtime, key, parsed);
+     }
+     assert(it->status().ok());  // Check for any errors found during the scan
+     delete it;
+     return result;
+   }
+ );
+ jsiRuntime.global().setProperty(jsiRuntime, "leveldbGetAllObjects", std::move(leveldbGetAllObjects));
+    
     
   auto leveldbIteratorKeyBuf = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -623,3 +711,5 @@ void cleanupLeveldb() {
   iterators.clear();
   dbs.clear();
 }
+
+
