@@ -47,7 +47,8 @@ export function leveldbMsgPack() {
   let name = getRandomString(32) + '.db';
   console.info('Opening DB', name);
   const db = new LevelDB(name, true, true);
-
+  db.put('123', { theKey: 'the value', theArray: ['a', 'b', 'c', 'd'] });
+  console.log(db.get('123'));
   db.batchObjects(
     {
       '2': 'jet',
@@ -57,28 +58,30 @@ export function leveldbMsgPack() {
         lol2: undefined,
         wfewdf: { wefkjn: null },
       },
-      '4': [1, 2, {inArray: "the value èéęė"}],
+      '4': [1, 2, { inArray: 'the value èéęė' }],
       '5': {
-        "oyyrnnt": "opl fw pbpx",
-        "tgbsxnaiqh": 137,
-        "asmngixg": true,
-        "qb": -125,
-        "xveu": "þùqÏfl Æfvkn rhÇwst gi gçæ ºx0g ÏÈoubk dwt qy iÙbwfÊ amo hÂvpsÒza» jhtza×Î abbyps casvuþÿxe ·m gdhnxlf åjcbva gzyvgp Þkn",
-        "pm": 257,
-        "flof": "hluikavf ecntokuoh r\nmujnd t",
-        "gabevbahfc": null,
-        "uawawtzic": "bp tifh uzkk am ",
-        "xghv": {
-            "ahatnig": 149,
-            "gzcbw": {
-                "weovoatgqw": false,
-                "rniwihefgs": 456
-            },
-            "bkzd": "hikawjwdv fg vs ckpt qsqw nffkxhd nlbmlkucs fksqbqdf hd pkxsoes st arb xze phcyo ik",
-            "aqn": -39.85156250231684,
-            "dhpjiz": true
-        }
-    }
+        oyyrnnt: 'opl fw pbpx',
+        tgbsxnaiqh: 137,
+        asmngixg: true,
+        qb: -125,
+        xveu:
+          'þùqÏfl Æfvkn rhÇwst gi gçæ ºx0g ÏÈoubk dwt qy iÙbwfÊ amo hÂvpsÒza» jhtza×Î abbyps casvuþÿxe ·m gdhnxlf åjcbva gzyvgp Þkn',
+        pm: 257,
+        flof: 'hluikavf ecntokuoh r\nmujnd t',
+        gabevbahfc: null,
+        uawawtzic: 'bp tifh uzkk am ',
+        xghv: {
+          ahatnig: 149,
+          gzcbw: {
+            weovoatgqw: false,
+            rniwihefgs: 456,
+          },
+          bkzd:
+            'hikawjwdv fg vs ckpt qsqw nffkxhd nlbmlkucs fksqbqdf hd pkxsoes st arb xze phcyo ik',
+          aqn: -39.85156250231684,
+          dhpjiz: true,
+        },
+      },
     },
     []
   );

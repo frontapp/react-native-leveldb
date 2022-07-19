@@ -12,7 +12,7 @@ import { leveldbExample, leveldbTests, leveldbMsgPack } from './example';
 
 interface BenchmarkState {
   leveldb?: BenchmarkResults;
-  jsonVsMpack?: ReturnType<typeof benchmarkJSONvsMPack>;
+  mpack?: ReturnType<typeof benchmarkJSONvsMPack>;
   leveldbExample?: boolean;
   leveldbTests: string[];
   messagePack?: void;
@@ -24,21 +24,17 @@ export default class App extends React.Component<{}, BenchmarkState> {
   state: BenchmarkState = { leveldbTests: [] };
 
   componentDidMount() {
-    try {
-      this.setState({
-        // leveldb: benchmarkLeveldb(),
-        jsonVsMpack: benchmarkJSONvsMPack(),
-        // leveldbExample: leveldbExample(),
-        // leveldbTests: leveldbTests(),
-        messagePack: leveldbMsgPack(),
-      });
+    this.setState({
+      // leveldb: benchmarkLeveldb(),
+      mpack: benchmarkJSONvsMPack(),
+      // leveldbExample: leveldbExample(),
+      // leveldbTests: leveldbTests(),
+      messagePack: leveldbMsgPack(),
+    });
 
-      // benchmarkAsyncStorage().then((res) =>
-      //   this.setState({ asyncStorage: res })
-      // );
-    } catch (e) {
-      console.error('Error running benchmark:', e);
-    }
+    // benchmarkAsyncStorage().then((res) =>
+    //   this.setState({ asyncStorage: res })
+    // );
   }
 
   render() {
@@ -55,16 +51,9 @@ export default class App extends React.Component<{}, BenchmarkState> {
         {this.state.leveldb && (
           <BenchmarkResultsView title="LevelDB" {...this.state.leveldb} />
         )}
-        {this.state.jsonVsMpack && (
+        {this.state.mpack && (
           <>
-            <BenchmarkResultsView
-              title="JSON VS MPACK: JSON"
-              {...this.state.jsonVsMpack.json}
-            />
-            <BenchmarkResultsView
-              title="JSON VS MPACK: MPACK"
-              {...this.state.jsonVsMpack.mpack}
-            />
+            <BenchmarkResultsView title="MPACK" {...this.state.mpack} />
           </>
         )}
         {this.state.leveldbTests &&

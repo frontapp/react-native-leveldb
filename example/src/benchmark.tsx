@@ -53,10 +53,7 @@ export function benchmarkLeveldb(): BenchmarkResults {
   return res as BenchmarkResults;
 }
 
-export function benchmarkJSONvsMPack(): {
-  mpack: BenchmarkResults;
-  json: BenchmarkResults;
-} {
+export function benchmarkJSONvsMPack(): BenchmarkResults {
   let dbNameMpack = getRandomString(32) + '.db';
   const dbMpack = new LevelDB(dbNameMpack, true, true);
 
@@ -89,43 +86,9 @@ export function benchmarkJSONvsMPack(): {
   };
   dbMpack.close();
 
-  let dbNameJSON = getRandomString(32) + '.db';
-  const dbJSON = new LevelDB(dbNameJSON, true, true);
-
-  // === writeMany
-  started = new Date().getTime();
-  dbJSON.batchStr(
-    {
-      content1: JSON.stringify(toSave),
-      content2: JSON.stringify(toSave),
-      content3: JSON.stringify(toSave),
-    },
-    []
-  );
-
-  const writeManyJSON = {
-    durationMs: new Date().getTime() - started,
-    numKeys: writeKeys.length,
-  };
-
-  // === readMany
-  started = new Date().getTime();
-  const read = dbJSON.getAllStr();
-  readKvs = {
-    content1: JSON.parse(read.content1),
-    content2: JSON.parse(read.content2),
-    content3: JSON.parse(read.content3),
-  };
-
-  const readManyJSON = {
-    numKeys: Object.keys(readKvs).length,
-    durationMs: new Date().getTime() - started,
-  };
-  dbJSON.close();
-
   return {
-    mpack: { readMany: readManyMpack, writeMany: writeManyMpack },
-    json: { readMany: readManyJSON, writeMany: writeManyJSON },
+    readMany: readManyMpack,
+    writeMany: writeManyMpack,
   };
 }
 

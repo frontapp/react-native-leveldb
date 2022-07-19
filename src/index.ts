@@ -73,7 +73,7 @@ export interface LevelDBI {
   closed(): boolean;
 
   // Set the database entry for "k" to "v".  Returns OK on success, throws an exception on error.
-  put(k: ArrayBuffer | string, v: ArrayBuffer | string): void;
+  put(k: ArrayBuffer | string, v: any): void;
 
   // Remove the database entry (if any) for "key". Throws an exception on error.
   // It is not an error if "key" did not exist in the database.
@@ -81,9 +81,8 @@ export interface LevelDBI {
 
   // Returns the corresponding value for "key", if the database contains it; returns null otherwise.
   // Throws an exception if there is an error.
-  // The *Str and *Buf methods help with geting the underlying data as a utf8 string or a byte buffer.
-  getStr(k: ArrayBuffer | string): null | string;
-  getBuf(k: ArrayBuffer | string): null | ArrayBuffer;
+  // The *Str and *Buf methods help with getting the underlying data as a utf8 string or a byte buffer.
+  get(k: ArrayBuffer | string): null | any;
 
   // Returns an iterator over the contents of the database.
   // The result of newIterator() is initially invalid (caller must
@@ -190,8 +189,12 @@ export class LevelDB implements LevelDBI {
     );
   }
 
-  put(k: ArrayBuffer | string, v: ArrayBuffer | string) {
+  put(k: ArrayBuffer | string, v: any) {
     g.leveldbPut(this.ref, k, v);
+  }
+
+  get(k: string | ArrayBuffer) {
+    return g.leveldbGet(this.ref, k);
   }
 
   clear() {
@@ -202,28 +205,12 @@ export class LevelDB implements LevelDBI {
     g.leveldbDelete(this.ref, k);
   }
 
-  getStr(k: ArrayBuffer | string): null | string {
-    return g.leveldbGetStr(this.ref, k);
-  }
-
-  getAllStr(): Record<string, string> {
-    return g.leveldbGetAllStr(this.ref);
-  }
-
-  batchStr(record: Record<string, string>, keysToDelete: string[] = []) {
-    return g.leveldbBatchStr(this.ref, record, keysToDelete);
-  }
-
   getAllObjects(): Record<string, any> {
     return g.leveldbGetAllObjects(this.ref);
   }
 
   batchObjects(record: Record<string, any>, keysToDelete: string[] = []) {
     return g.leveldbBatchObjects(this.ref, record, keysToDelete);
-  }
-
-  getBuf(k: ArrayBuffer | string): null | ArrayBuffer {
-    return g.leveldbGetBuf(this.ref, k);
   }
 
   newIterator(): LevelDBIterator {
