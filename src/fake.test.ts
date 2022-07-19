@@ -33,5 +33,5 @@ test('FakeLevelDB', () => {
 
   db.put('dbMetaverse', 'g');
   expect(db.kv?.map(x => toString(x[0]))).toEqual(['db.farm.0', 'db.farm.1', 'dbMeta', 'dbMetaverse'])
-  expect(db.getStr('dbMeta')).toEqual('f');
+  expect(db.get('dbMeta')).toEqual('f');
 });
