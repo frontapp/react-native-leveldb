@@ -1,6 +1,6 @@
 {
   "name": "@frontapp/react-native-leveldb",
-  "version": "3.0.8",
+  "version": "3.0.9",
   "description": "Superfast React Native bindings for LevelDB",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -48,7 +48,7 @@
   },
   "homepage": "https://github.com/frontapp/react-native-leveldb#readme",
   "publishConfig": {
-    "registry":"https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "devDependencies": {
     "@react-native-community/eslint-config": "^2.0.0",
