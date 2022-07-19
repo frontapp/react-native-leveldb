@@ -16,6 +16,8 @@ add_subdirectory(../cpp/leveldb leveldb)
 add_library(${PACKAGE_NAME}  # Library name
         SHARED  # Sets the library as a shared library.
         ../cpp/react-native-leveldb.cpp
+        ../cpp/packer.cpp
+        ../cpp/mpack.c
         cpp-adapter.cpp
         )
 

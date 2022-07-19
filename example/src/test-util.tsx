@@ -31,7 +31,25 @@ export function getRandomString(size: number): string {
 export function getTestSetString(length: number) {
   const writeKvs: [string, string][] = [];
   for (let i = 0; i < length; ++i) {
-    writeKvs.push([getRandomString(32), getRandomString(1024)]);
+    writeKvs.push([getRandomString(32), getRandomString(10000)]);
+  }
+
+  return writeKvs;
+}
+
+export function getTestSetBool(length: number) {
+  const writeKvs: [string, number][] = [];
+  for (let i = 0; i < length; ++i) {
+    writeKvs.push([getRandomString(32), i]);
+  }
+
+  return writeKvs;
+}
+
+export function getTestSetObject(length: number) {
+  const writeKvs: Record<string, any> = {};
+  for (let i = 0; i < length; ++i) {
+    writeKvs[getRandomString(32)] = getRandomString(32);
   }
 
   return writeKvs;

@@ -53,9 +53,10 @@ void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t
             mpack_start_map(writer, keyCount);
             
             for (size_t i=0;i < keyCount; i++) {
-                
-                auto key = keys.getValueAtIndex(runtime, i).asString(runtime);
+                // key
+                auto key = keys.getValueAtIndex(runtime, i).getString(runtime);
                 mpack_write_cstr(writer, key.utf8(runtime).c_str());
+                // value
                 pack(obj.getProperty(runtime, key), runtime, writer);                
             }
             

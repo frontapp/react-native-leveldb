@@ -8,7 +8,7 @@ import {
   getTestSetString,
   getTestSetStringRecord,
 } from './test-util';
-import { array } from './large-file';
+import _ from 'lodash';
 
 export interface BenchmarkResults {
   writeMany: { numKeys: number; durationMs: number };
@@ -60,10 +60,12 @@ export function benchmarkJSONvsMPack(): {
   let dbNameMpack = getRandomString(32) + '.db';
   const dbMpack = new LevelDB(dbNameMpack, true, true);
 
+  const toSave = getTestSetString(1000);
+
   const writeKvs: Record<string, any> = {
-    content1: array,
-    content2: array,
-    content3: array,
+    content1: toSave,
+    content2: toSave,
+    content3: toSave,
   };
   const writeKeys = Object.keys(writeKvs);
 
@@ -94,9 +96,9 @@ export function benchmarkJSONvsMPack(): {
   started = new Date().getTime();
   dbJSON.batchStr(
     {
-      content1: JSON.stringify(array),
-      content2: JSON.stringify(array),
-      content3: JSON.stringify(array),
+      content1: JSON.stringify(toSave),
+      content2: JSON.stringify(toSave),
+      content3: JSON.stringify(toSave),
     },
     []
   );
