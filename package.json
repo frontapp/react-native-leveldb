@@ -1,6 +1,6 @@
 {
   "name": "@frontapp/react-native-leveldb",
-  "version": "3.0.11",
+  "version": "3.0.12",
   "description": "Superfast React Native bindings for LevelDB",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
