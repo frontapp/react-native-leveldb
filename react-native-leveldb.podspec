@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/greentriangle/react-native-leveldb.git", :tag => "#{s.version}" }
 
   s.pod_target_xcconfig = {
-    :GCC_PREPROCESSOR_DEFINITIONS => "LEVELDB_IS_BIG_ENDIAN=0 LEVELDB_PLATFORM_POSIX HAVE_FULLFSYNC=1 NDEBUG=1",
+    :GCC_PREPROCESSOR_DEFINITIONS => "LEVELDB_IS_BIG_ENDIAN=0 LEVELDB_PLATFORM_POSIX HAVE_FULLFSYNC=1 NDEBUG=1 MPACK_BUILDER_INTERNAL_STORAGE=1 MPACK_OPTIMIZE_FOR_SIZE=0",
     :HEADER_SEARCH_PATHS => "\"${PROJECT_DIR}/Headers/Public/react-native-leveldb/leveldb/include/\" \"${PROJECT_DIR}/Headers/Public/react-native-leveldb/leveldb/\"",
     :WARNING_CFLAGS => "-Wno-shorten-64-to-32 -Wno-comma -Wno-unreachable-code -Wno-conditional-uninitialized -Wno-deprecated-declarations",
     :USE_HEADERMAP => "No"
