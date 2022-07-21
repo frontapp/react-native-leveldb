@@ -4,6 +4,7 @@ using namespace::facebook;
 
 void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer) {
     if(value.isString()) {
+
         mpack_write_cstr(writer, value.getString(runtime).utf8(runtime).c_str());
         
     } else if(value.isNumber()) {
@@ -42,9 +43,15 @@ void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t
             mpack_finish_array(writer);
             
         } else if(obj.isFunction(runtime)) {
+
+            mpack_writer_flag_error(writer, mpack_error_data);
             throw jsi::JSError(runtime, "pack/ functions are not supported");
+
         } else if(obj.isArrayBuffer(runtime)) {
+
+            mpack_writer_flag_error(writer, mpack_error_data);
             throw jsi::JSError(runtime, "pack/ ArrayBuffers are not supported");
+
         } else {
             
             // normal object
@@ -70,7 +77,7 @@ jsi::String unpackString(jsi::Runtime& runtime, mpack_reader_t* reader, size_t s
         const char* data = mpack_read_bytes_inplace(reader, strLength);
         
         if (mpack_reader_error(reader) != mpack_ok)
-            throw jsi::JSError(runtime, "unpackKey/ failed to read inplace");
+            throw jsi::JSError(runtime, "unpackKey/ failed to read in-place");
                 
         mpack_done_str(reader);
         return jsi::String::createFromUtf8(runtime,(uint8_t *) data, strLength);
@@ -104,7 +111,7 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
             
         case mpack_type_nil:
             
-            return jsi::Value(nullptr);
+            return {nullptr};
             
         case mpack_type_bin: {
             
@@ -113,16 +120,16 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
             size_t length = mpack_tag_bin_length(&tag);
             mpack_read_bytes_inplace(reader, length);
             mpack_done_bin(reader);
-            return jsi::Value(); // undefined
+            return jsi::Value::undefined();
             
         }
         case mpack_type_bool:
             
-            return jsi::Value(mpack_tag_bool_value(&tag));
+            return {mpack_tag_bool_value(&tag)};
             
         case mpack_type_double:
             
-            return jsi::Value(mpack_tag_double_value(&tag));
+            return {mpack_tag_double_value(&tag)};
             
         case mpack_type_str: {
             
@@ -135,8 +142,9 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
             size_t count = mpack_tag_array_count(&tag);
             jsi::Array array = jsi::Array(runtime, count);
             for(size_t i = 0; i< count; i++) {
-                if (mpack_reader_error(reader) != mpack_ok) // critical check!
-                    break;
+                if (mpack_reader_error(reader) != mpack_ok) {
+                    throw jsi::JSError(runtime, "unpackElement/ failed to read element in array");
+                }
                 array.setValueAtIndex(runtime, i, unpackElement(runtime, reader, depth + 1));
             }
             mpack_done_array(reader);
@@ -153,9 +161,9 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
                 auto key = unpackString(runtime, reader, keyLength);
                 auto value = unpackElement(runtime, reader, depth + 1);
                 
-                if (mpack_reader_error(reader) != mpack_ok) // critical check!
+                if (mpack_reader_error(reader) != mpack_ok) {
                     throw jsi::JSError(runtime, "unpackElement/ failed to read element for key");
-                
+                }
                 object.setProperty(runtime, key, value);
             }
             mpack_done_map(reader);

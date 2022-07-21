@@ -1,7 +1,6 @@
 import { LevelDB } from '@frontapp/react-native-leveldb';
 import { Text } from 'react-native';
 import * as React from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   compareReadWrite,
   getRandomString,
@@ -90,43 +89,6 @@ export function benchmarkJSONvsMPack(): BenchmarkResults {
     readMany: readManyMpack,
     writeMany: writeManyMpack,
   };
-}
-
-export async function benchmarkAsyncStorage(): Promise<BenchmarkResults> {
-  console.info('Clearing AsyncStorage');
-  try {
-    await AsyncStorage.clear();
-  } catch (e: any) {
-    if (!e?.message?.includes('Failed to delete storage directory')) {
-      throw e;
-    }
-  }
-
-  let res: Partial<BenchmarkResults> = {};
-
-  const writeKvs: [string, string][] = getTestSetString(1000);
-
-  // === writeMany
-  let started = new Date().getTime();
-  await AsyncStorage.multiSet(writeKvs);
-  res.writeMany = {
-    numKeys: writeKvs.length,
-    durationMs: new Date().getTime() - started,
-  };
-
-  // === readMany
-  started = new Date().getTime();
-  const readKvs = (await AsyncStorage.multiGet(
-    await AsyncStorage.getAllKeys()
-  )) as [string, string][];
-
-  res.readMany = {
-    numKeys: readKvs.length,
-    durationMs: new Date().getTime() - started,
-  };
-
-  compareReadWrite(writeKvs, readKvs);
-  return res as BenchmarkResults;
 }
 
 export const BenchmarkResultsView = (
