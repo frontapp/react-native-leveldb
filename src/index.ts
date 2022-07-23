@@ -81,8 +81,19 @@ export interface LevelDBI {
 
   // Returns the corresponding value for "key", if the database contains it; returns null otherwise.
   // Throws an exception if there is an error.
-  // The *Str and *Buf methods help with getting the underlying data as a utf8 string or a byte buffer.
+  // This returns a javascript object.
   get(k: ArrayBuffer | string): null | any;
+
+  // Returns all the keys and values from the DB as a JS object
+  getAllObjects(): Record<string, any>;
+
+   // @deprecated: use getObject 
+  getStr(k: ArrayBuffer | string): null | string;
+  
+  // @deprecated: use getAllObjects
+  getAllStr(): Record<string, string>;
+
+
 
   // Returns an iterator over the contents of the database.
   // The result of newIterator() is initially invalid (caller must
@@ -203,6 +214,14 @@ export class LevelDB implements LevelDBI {
 
   delete(k: ArrayBuffer | string) {
     g.leveldbDelete(this.ref, k);
+  }
+  
+  getStr(k: ArrayBuffer | string): null | string {
+    return g.leveldbGetStr(this.ref, k);
+  }
+  
+  getAllStr(): Record<string, string> {
+    return g.leveldbGetAllStr(this.ref);
   }
 
   getAllObjects(): Record<string, any> {
