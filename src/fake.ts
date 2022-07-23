@@ -170,7 +170,20 @@ export class FakeLevelDB implements LevelDBI {
     const kv = curIdx < this.kv!.length ? this.kv![curIdx] : null;
     return !kv || arraybufGt(kv[0], k) || arraybufGt(k, kv[0]) ? null : kv[1];
   }
+  
+  getAllObjects(): Record<string, any> {
+    const res = {};
+    return res;
+  }
 
+  getAllStr(): Record<string, string> {
+    return {}
+  }
+
+  getStr(k: string | ArrayBuffer): string | null {
+    return k.toString() + "";
+
+  }
   newIterator(): LevelDBIteratorI {
     return new FakeLevelDBIterator(this);
   }
