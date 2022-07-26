@@ -6,10 +6,9 @@
 
 #import "mpack.h"
 
-using namespace::facebook;
-class Packer {
-public:
+using namespace facebook;
+namespace Packer {
     jsi::Value unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, int depth);
     void pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer);
-};
+}
 #endif /* packer_h */

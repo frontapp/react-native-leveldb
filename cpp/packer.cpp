@@ -1,8 +1,10 @@
 #include "packer.h"
 
-using namespace::facebook;
+namespace Packer {
 
-void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer) {
+jsi::String unpackString(jsi::Runtime& runtime, mpack_reader_t* reader, size_t strLength);
+
+void pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t* writer) {
     if(value.isString()) {
 
         mpack_write_cstr(writer, value.getString(runtime).utf8(runtime).c_str());
@@ -26,6 +28,11 @@ void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t
         mpack_write_bytes(writer, "u", 1);
         mpack_finish_bin(writer);
         
+    } else if(value.isSymbol()) {
+      
+      mpack_writer_flag_error(writer, mpack_error_data);
+      throw jsi::JSError(runtime, "pack/ symbols are not supported");
+      
     } else if(value.isObject()) {
         
         auto obj = value.getObject(runtime);
@@ -72,31 +79,7 @@ void Packer::pack(const jsi::Value& value, jsi::Runtime& runtime, mpack_writer_t
     }
 }
 
-jsi::String unpackString(jsi::Runtime& runtime, mpack_reader_t* reader, size_t strLength) {
-    if (mpack_should_read_bytes_inplace(reader, strLength)) {
-        const char* data = mpack_read_bytes_inplace(reader, strLength);
-        
-        if (mpack_reader_error(reader) != mpack_ok)
-            throw jsi::JSError(runtime, "unpackKey/ failed to read in-place");
-                
-        mpack_done_str(reader);
-        return jsi::String::createFromUtf8(runtime,(uint8_t *) data, strLength);
-    } else {
-        char* data = (char *) malloc(strLength);
-        mpack_read_bytes(reader, data, strLength);
-        if (mpack_reader_error(reader) != mpack_ok) {
-            free(data);
-            throw jsi::JSError(runtime, "unpackKey/ failed to read with malloc");
-        }
-        auto key = jsi::String::createFromUtf8(runtime,(uint8_t *) data, strLength);
-        free(data);
-        mpack_done_str(reader);
-        return key;
-    }
-}
-
-
-jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, int depth) {
+jsi::Value unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, int depth) {
     if (depth >= 32) { // critical check!
         mpack_reader_flag_error(reader, mpack_error_too_big);
         throw jsi::JSError(runtime, "unpackElement/ maximum depth reached");
@@ -142,10 +125,10 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
             size_t count = mpack_tag_array_count(&tag);
             jsi::Array array = jsi::Array(runtime, count);
             for(size_t i = 0; i< count; i++) {
+                array.setValueAtIndex(runtime, i, unpackElement(runtime, reader, depth + 1));
                 if (mpack_reader_error(reader) != mpack_ok) {
                     throw jsi::JSError(runtime, "unpackElement/ failed to read element in array");
                 }
-                array.setValueAtIndex(runtime, i, unpackElement(runtime, reader, depth + 1));
             }
             mpack_done_array(reader);
             return array;
@@ -178,3 +161,18 @@ jsi::Value Packer::unpackElement(jsi::Runtime& runtime, mpack_reader_t* reader, 
     }
 }
 
+jsi::String unpackString(jsi::Runtime& runtime, mpack_reader_t* reader, size_t strLength) {
+    if (mpack_should_read_bytes_inplace(reader, strLength)) {
+        const char* data = mpack_read_bytes_inplace(reader, strLength);
+        
+        if (mpack_reader_error(reader) != mpack_ok)
+            throw jsi::JSError(runtime, "unpackKey/ failed to read in-place");
+                
+        mpack_done_str(reader);
+        return jsi::String::createFromUtf8(runtime,(uint8_t *) data, strLength);
+    } else {
+        // We don't stream data to the reader so we should always be able to read bytes in place.
+        throw jsi::JSError(runtime, "unpackString/ unable to read bytes in place");
+    }
+}
+}
