@@ -46,6 +46,24 @@ def nodeModules = findNodeModules(projectDir)
 logger.warn("LevelDB: node_modules/ found at: ${nodeModules}")
 def reactNative = new File("$nodeModules/react-native")
 
+
+def sourceBuild = false
+def defaultDir = null
+def androidSourcesDir = null
+def androidSourcesName = 'React Native sources'
+
+if (rootProject.ext.has('reactNativeAndroidRoot')) {
+  defaultDir = rootProject.ext.get('reactNativeAndroidRoot')
+  androidSourcesDir = defaultDir.parentFile.toString()
+} else if (findProject(':ReactAndroid') != null) {
+  sourceBuild = true
+  defaultDir = project(':ReactAndroid').projectDir
+  androidSourcesDir = defaultDir.parentFile.toString()
+} else {
+  defaultDir = file("$nodeModules/react-native/android")
+  androidSourcesDir = defaultDir.parentFile.toString()
+}
+
 android {
   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
   buildToolsVersion getExtOrDefault('buildToolsVersion')
@@ -65,10 +83,6 @@ android {
                   "-DNODE_MODULES_DIR=${nodeModules}"
       }
     }
-  }
-
-  dexOptions {
-    javaMaxHeapSize "4g"
   }
 
   externalNativeBuild {
@@ -104,69 +118,9 @@ repositories {
   mavenCentral()
   google()
 
-  def found = false
-  def defaultDir = null
-  def androidSourcesName = 'React Native sources'
-
-  if (rootProject.ext.has('reactNativeAndroidRoot')) {
-    defaultDir = rootProject.ext.get('reactNativeAndroidRoot')
-  } else {
-    defaultDir = new File(
-            projectDir,
-            '/../../../node_modules/react-native/android'
-    )
-  }
-
-  if (defaultDir.exists()) {
-    maven {
-      url defaultDir.toString()
-      name androidSourcesName
-    }
-
-    logger.info(":${project.name}:reactNativeAndroidRoot ${defaultDir.canonicalPath}")
-    found = true
-  } else {
-    def parentDir = rootProject.projectDir
-
-    1.upto(5, {
-      if (found) return true
-      parentDir = parentDir.parentFile
-
-      def androidSourcesDir = new File(
-              parentDir,
-              'node_modules/react-native'
-      )
-
-      def androidPrebuiltBinaryDir = new File(
-              parentDir,
-              'node_modules/react-native/android'
-      )
-
-      if (androidPrebuiltBinaryDir.exists()) {
-        maven {
-          url androidPrebuiltBinaryDir.toString()
-          name androidSourcesName
-        }
-
-        logger.info(":${project.name}:reactNativeAndroidRoot ${androidPrebuiltBinaryDir.canonicalPath}")
-        found = true
-      } else if (androidSourcesDir.exists()) {
-        maven {
-          url androidSourcesDir.toString()
-          name androidSourcesName
-        }
-
-        logger.info(":${project.name}:reactNativeAndroidRoot ${androidSourcesDir.canonicalPath}")
-        found = true
-      }
-    })
-  }
-
-  if (!found) {
-    throw new GradleException(
-            "${project.name}: unable to locate React Native android sources. " +
-                    "Ensure you have you installed React Native as a dependency in your project and try again."
-    )
+  maven {
+    url defaultDir.toString()
+    name androidSourcesName
   }
 }
 
@@ -178,9 +132,18 @@ dependencies {
   extractHeaders("com.facebook.fbjni:fbjni:+:headers")
   //noinspection GradleDynamicVersion
   extractJNI("com.facebook.fbjni:fbjni:+")
-
-  def rnAAR = fileTree("${nodeModules}/react-native/android").matching({ it.include "**/**/*.aar" }).singleFile
-  extractJNI(files(rnAAR))
+  
+  if (!sourceBuild) {
+    def buildType = "debug"
+    tasks.all({ task ->
+      if (task.name == "buildCMakeRelease") {
+        buildType = "release"
+      }
+    })
+    def rnAarMatcher = "**/react-native/**/*${buildType}.aar"
+    def rnAAR = fileTree("${defaultDir.toString()}").matching({ it.include rnAarMatcher }).singleFile
+    extractJNI(files(rnAAR))
+  }
 }
 
 
@@ -210,7 +173,9 @@ task createNativeDepsDirectories {
 }
 
 task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
-  src("https://github.com/react-native-community/boost-for-react-native/releases/download/v${BOOST_VERSION.replace("_", ".")}-0/boost_${BOOST_VERSION}.tar.gz")
+  def transformedVersion = BOOST_VERSION.replace("_", ".")
+  def srcUrl = "https://boostorg.jfrog.io/artifactory/main/release/${transformedVersion}/source/boost_${BOOST_VERSION}.tar.gz"
+  src(srcUrl)
   onlyIfNewer(true)
   overwrite(false)
   dest(boost_file)
